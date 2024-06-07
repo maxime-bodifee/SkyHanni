@@ -95,6 +95,11 @@ object ChocolateFactoryTimeTowerManager {
         return profileStorage?.maxTimeTowerUses ?: 3
     }
 
+    fun chargeAvailableSoon(): Boolean {
+        return currentCharges() > 0
+            || (profileStorage?.nextTimeTower?.let { SimpleTimeMark(it).timeUntil() } ?: 8.hours) < 1.hours
+    }
+
     fun timeTowerFull() = currentCharges() >= maxCharges()
 
     fun timeTowerActive(): Boolean {
