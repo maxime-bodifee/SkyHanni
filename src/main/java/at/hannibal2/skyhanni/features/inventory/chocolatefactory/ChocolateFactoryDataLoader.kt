@@ -26,7 +26,7 @@ import at.hannibal2.skyhanni.utils.StringUtils.removeColor
 import at.hannibal2.skyhanni.utils.TimeUtils
 import net.minecraft.item.ItemStack
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 @SkyHanniModule
 object ChocolateFactoryDataLoader {
@@ -431,14 +431,22 @@ object ChocolateFactoryDataLoader {
     private fun findBestUpgrades(list: MutableList<ChocolateFactoryUpgrade>) {
         val profileStorage = profileStorage ?: return
 
-        val notMaxed = list.filter { !it.isMaxed && it.effectiveCost != null }
+        var notMaxed = list.filter { !it.isMaxed && it.effectiveCost != null }
 
-        val upgrades = if (!config.includeTimeTowerUpgrade
-            || (config.optimalTimeTowerUpgrade && !ChocolateFactoryTimeTowerManager.chargeAvailableSoon())) {
-             notMaxed.filter { it.slotIndex != ChocolateFactoryAPI.timeTowerIndex }
-        } else notMaxed
+        val timeTowerUpgrade = list.find { it.slotIndex == ChocolateFactoryAPI.timeTowerIndex }
+        if (timeTowerUpgrade != null) {
+            val canAffordAt = timeTowerUpgrade.canAffordAt ?: SimpleTimeMark.farFuture()
+            val difference = (SimpleTimeMark(profileStorage.nextTimeTower) - canAffordAt)
 
-        val bestUpgrade = upgrades.minByOrNull { it.effectiveCost ?: Double.MAX_VALUE }
+            if (!config.includeTimeTowerUpgrade
+                || (config.optimalTimeTowerUpgrade
+                    && ChocolateFactoryTimeTowerManager.currentCharges() == 0
+                    && difference.absoluteValue > 15.minutes)) {
+                notMaxed = notMaxed.filter { it.slotIndex != ChocolateFactoryAPI.timeTowerIndex }
+            }
+        }
+
+        val bestUpgrade = notMaxed.minByOrNull { it.effectiveCost ?: Double.MAX_VALUE }
         profileStorage.bestUpgradeAvailableAt = bestUpgrade?.canAffordAt?.toMillis() ?: 0
         profileStorage.bestUpgradeCost = bestUpgrade?.price ?: 0
         ChocolateFactoryAPI.bestPossibleSlot = bestUpgrade?.getValidUpgradeIndex() ?: -1
