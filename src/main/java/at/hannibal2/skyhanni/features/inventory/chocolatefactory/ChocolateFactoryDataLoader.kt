@@ -435,9 +435,8 @@ object ChocolateFactoryDataLoader {
 
         val upgrades = if (!config.includeTimeTowerUpgrade
             || (config.optimalTimeTowerUpgrade
-                && (ChocolateFactoryTimeTowerManager.currentCharges() > 0
-                    || SimpleTimeMark(profileStorage.nextTimeTower).timeUntil() > 1.hours)
-                )
+                && ChocolateFactoryTimeTowerManager.currentCharges() == 0
+                && SimpleTimeMark(profileStorage.nextTimeTower).timeUntil() > 1.hours)
             ) {
              notMaxed.filter { it.slotIndex != ChocolateFactoryAPI.timeTowerIndex }
         } else notMaxed
