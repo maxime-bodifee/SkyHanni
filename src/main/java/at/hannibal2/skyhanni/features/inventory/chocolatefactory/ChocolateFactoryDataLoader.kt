@@ -26,6 +26,7 @@ import at.hannibal2.skyhanni.utils.StringUtils.removeColor
 import at.hannibal2.skyhanni.utils.TimeUtils
 import net.minecraft.item.ItemStack
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import kotlin.time.Duration.Companion.hours
 
 @SkyHanniModule
 object ChocolateFactoryDataLoader {
@@ -430,11 +431,18 @@ object ChocolateFactoryDataLoader {
     private fun findBestUpgrades(list: MutableList<ChocolateFactoryUpgrade>) {
         val profileStorage = profileStorage ?: return
 
-        // removing time tower here as people like to determine when to buy it themselves
-        val notMaxed =
-            list.filter { !it.isMaxed && it.slotIndex != ChocolateFactoryAPI.timeTowerIndex && it.effectiveCost != null }
+        val notMaxed = list.filter { !it.isMaxed && it.effectiveCost != null }
 
-        val bestUpgrade = notMaxed.minByOrNull { it.effectiveCost ?: Double.MAX_VALUE }
+        val upgrades = if (!config.includeTimeTowerUpgrade
+            || (config.optimalTimeTowerUpgrade
+                && (ChocolateFactoryTimeTowerManager.currentCharges() > 0
+                    || SimpleTimeMark(profileStorage.nextTimeTower).timeUntil() > 1.hours)
+                )
+            ) {
+             notMaxed.filter { it.slotIndex != ChocolateFactoryAPI.timeTowerIndex }
+        } else notMaxed
+
+        val bestUpgrade = upgrades.minByOrNull { it.effectiveCost ?: Double.MAX_VALUE }
         profileStorage.bestUpgradeAvailableAt = bestUpgrade?.canAffordAt?.toMillis() ?: 0
         profileStorage.bestUpgradeCost = bestUpgrade?.price ?: 0
         ChocolateFactoryAPI.bestPossibleSlot = bestUpgrade?.getValidUpgradeIndex() ?: -1

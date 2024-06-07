@@ -66,6 +66,16 @@ public class ChocolateFactoryConfig {
     public boolean highlightUpgrades = true;
 
     @Expose
+    @ConfigOption(name = "Include Time Tower Upgrade", desc = "Include time tower in the list of optimal upgrades.")
+    @ConfigEditorBoolean
+    public boolean includeTimeTowerUpgrade = false;
+
+    @Expose
+    @ConfigOption(name = "Suggest Time Tower Upgrade Based On Charges", desc = "Only suggest time tower as an optimal upgrade if a charge is available or will be available soon.")
+    @ConfigEditorBoolean
+    public boolean optimalTimeTowerUpgrade = false;
+
+    @Expose
     @ConfigOption(name = "Use Middle Click", desc = "Click on slots with middle click to speed up interactions.")
     @ConfigEditorBoolean
     public boolean useMiddleClick = true;
